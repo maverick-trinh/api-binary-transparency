@@ -8,6 +8,10 @@ import { bcs } from "@mysten/bcs";
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 import { WalrusClient } from "@mysten/walrus";
+import { getDomain, getSubdomainAndPath } from "./lib/domain-parsing";
+import { standardUrlFetcher } from "./url_fetcher_factory";
+import { UrlFetcher } from "./lib/url_fetcher";
+
 
 // --- Configuration ---
 // Set up the Sui client to connect to the mainnet.
@@ -23,8 +27,9 @@ const PORT: number = parseInt(process.env.PORT || "3000", 10);
 // This is an example object type for the main "Portal" object.
 // In a real-world scenario, this would be the specific package::module::struct
 // that defines the main object holding the blob metadata.
-const PORTAL_OBJECT_TYPE =
-  "0x2c68443db9e5c8909351414a8b7121659a35113b97a20a917955aa88c4d81f59::portal::Portal";
+// const PORTAL_OBJECT_TYPE =
+//   "0xf99aee9f21493e1590e7e5a9aea6f343a1f381031a04a732724871fc294be799";
+const PORTAL_DOMAIN_NAME_LENGTH = 21;
 
 function base64UrlSafeEncode(data: Uint8Array): string {
   let base64 = arrayBufferToBase64(data);
@@ -69,47 +74,6 @@ const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
 // Setup Swagger UI
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
-/**
- * A helper function to find the first object of a specific type owned by an address.
- * @param {string} ownerAddress - The Sui address of the owner.
- * @param {string} objectType - The type of object to search for.
- * @returns {Promise<string|null>} The object ID if found, otherwise null.
- */
-async function findObjectByType(
-  ownerAddress: string,
-  objectType: string
-): Promise<string | null> {
-  let cursor: string | null = null;
-  let objectId: string | null = null;
-
-  // Paginate through objects owned by the address until we find one that matches our type.
-  do {
-    const ownedObjectsResponse = await suiClient.getOwnedObjects({
-      owner: ownerAddress,
-      filter: { StructType: objectType },
-      options: { showType: true },
-      cursor: cursor,
-    });
-
-    const { data, nextCursor, hasNextPage } = ownedObjectsResponse;
-
-    if (data && data.length > 0) {
-      const foundObject = data.find(
-        (obj: any) => obj.data?.type === objectType
-      );
-      if (foundObject && foundObject.data) {
-        objectId = foundObject.data.objectId;
-        break; // Exit loop once found
-      }
-    }
-
-    cursor = hasNextPage ? nextCursor || null : null;
-  } while (cursor);
-
-  return objectId;
-}
-
 // --- API Endpoint ---
 // This endpoint implements the workflow: SuiNS -> ObjectID -> Blob IDs -> Blob Data
 
@@ -236,41 +200,27 @@ async function findObjectByType(
  */
 app.get("/api/fetch-blobs", async (req: Request, res: Response) => {
   // Ensure the query parameter is treated as a string.
-  const suinsName = req.query.name as string;
+  const url = new URL(req.url);
+  let portalObjectId: string | undefined;
+  const parsedUrl = getSubdomainAndPath(url, PORTAL_DOMAIN_NAME_LENGTH);
+  const portalDomain = getDomain(url, PORTAL_DOMAIN_NAME_LENGTH);
+  const requestDomain = getDomain(url, PORTAL_DOMAIN_NAME_LENGTH);
 
-  if (!suinsName) {
-    return res
-      .status(400)
-      .json({ error: "SuiNS name is required. Use ?name=<your-name>.sui" });
+  if (parsedUrl) {
+    const urlFetcher = standardUrlFetcher;
+    if (requestDomain == portalDomain && parsedUrl.subdomain) {
+      portalObjectId = await urlFetcher.resolveDomainAndFetchUrl(parsedUrl, null);
+    }
   }
 
-  console.log(`[1/5] Starting process for SuiNS name: ${suinsName}`);
+  if (!portalObjectId) {
+    return res.status(404).json({ 
+      error: "Could not resolve portal object ID from the provided URL." 
+    });
+  }
 
   try {
-    // --- Step 1: Resolve SuiNS Name to get the owner's address ---
-    const ownerAddress = await suiClient.resolveNameServiceAddress({
-      name: suinsName,
-    });
-    // if (!ownerAddress) {
-    //     console.error(`Failed to resolve SuiNS name: ${suinsName}`);
-    //     return res.status(404).json({ error: `SuiNS name '${suinsName}' not found or has no address.` });
-    // }
-    console.log(`[2/5] Resolved address: ${ownerAddress}`);
-
     // --- Step 2: Fetch the main Portal ObjectID ---
-    // const portalObjectId = await findObjectByType(ownerAddress, PORTAL_OBJECT_TYPE);
-    const portalObjectId =
-      "0x2e35ae0df36233fc98d2655fb6b31b75f7519fe89ffb5f186b8fd205a2a6990c";
-    if (!portalObjectId) {
-      console.error(
-        `Could not find Portal object for address: ${ownerAddress}`
-      );
-      return res
-        .status(404)
-        .json({
-          error: `No Portal object found for the owner of '${suinsName}'.`,
-        });
-    }
     console.log(`[3/5] Found Portal object ID: ${portalObjectId}`);
 
     // --- Step 3: Get Blob IDs from the Portal's dynamic fields ---
@@ -306,9 +256,6 @@ app.get("/api/fetch-blobs", async (req: Request, res: Response) => {
     } while (blobCursor);
 
     const blobObjectIds = Array.from(blobIdMap.values());
-    console.log(
-      `[4/5] Found ${blobObjectIds.length} blob IDs: ${blobObjectIds}`
-    );
 
     if (blobObjectIds.length === 0) {
       return res
@@ -335,22 +282,12 @@ app.get("/api/fetch-blobs", async (req: Request, res: Response) => {
             ([, id]) => id === blobObject.data?.objectId
           )?.[0] || "unknown";
 
-        console.log(
-          `Processing blob object for ${JSON.stringify(filename)} with ID: ${
-            blobObject.data?.objectId
-          }`
-        );
-
         if (blobObject.data && blobObject.data.content) {
           const blobId = (blobObject.data.content as any)?.fields?.value?.fields
             ?.blob_id;
           const pathField = (blobObject.data.content as any)?.fields?.name?.fields?.path;
 
           if (blobId && pathField) {
-            console.log(
-              `Raw blob_id: ${blobId} for file: ${JSON.stringify(filename)}`
-            );
-
             const hasAllowedExtension = allowedFileTypes.some(ext => 
               pathField.toLowerCase().endsWith(ext)
             );
@@ -372,12 +309,6 @@ app.get("/api/fetch-blobs", async (req: Request, res: Response) => {
               formattedBlobId = blobId.toString();
             }
 
-            console.log(
-              `Using Walrus SDK to fetch blob ID: ${formattedBlobId} for file: ${JSON.stringify(
-                filename
-              )}`
-            );
-
             const blob = await walrusClient.readBlob({
               blobId: formattedBlobId,
             });
@@ -392,11 +323,7 @@ app.get("/api/fetch-blobs", async (req: Request, res: Response) => {
                 size: blobContent.length,
               };
 
-              console.log(
-                `Successfully fetched ${filename} (${blobContent.length} characters)`
-              );
             } else {
-              console.warn(`No data returned for blob ${blobId}`);
               results[filename] = {
                 blob_id: formattedBlobId,
                 content: null,
@@ -422,7 +349,7 @@ app.get("/api/fetch-blobs", async (req: Request, res: Response) => {
     console.log(`[5/5] Finish`);
 
     res.status(200).json({
-      message: `Successfully fetched data for ${suinsName}`,
+      message: `Successfully fetched data `,
       data: {
         results: results,
         object_id: portalObjectId,
@@ -444,49 +371,6 @@ app.get("/api/fetch-blobs", async (req: Request, res: Response) => {
         details: error.message,
       });
   }
-});
-
-/**
- * @swagger
- * /:
- *   get:
- *     summary: API health check and information
- *     description: Returns basic information about the API and available endpoints
- *     tags:
- *       - Health Check
- *     responses:
- *       200:
- *         description: API is running successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "SuiNS Blob Fetcher API is running"
- *                 version:
- *                   type: string
- *                   example: "1.0.0"
- *                 endpoints:
- *                   type: object
- *                   properties:
- *                     api:
- *                       type: string
- *                       example: "/api/fetch-blobs"
- *                     docs:
- *                       type: string
- *                       example: "/api-docs"
- */
-app.get("/", (req: Request, res: Response) => {
-  res.json({
-    message: "SuiNS Blob Fetcher API is running",
-    version: "1.0.0",
-    endpoints: {
-      api: "/api/fetch-blobs",
-      docs: "/api-docs",
-    },
-  });
 });
 
 // --- Start Server ---
