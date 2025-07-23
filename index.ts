@@ -297,7 +297,7 @@ app.get("/api/fetch-blobs", async (req: Request, res: Response) => {
 
     // --- Step 5: Extract blob_id from each object and fetch data using Walrus SDK ---
     const results: { [key: string]: any } = {};
-    const allowedFileTypes = ['.html', '.css', '.js', 'mjs'];
+    const allowedFileTypes = ['.html', '.css', '.js', 'mjs', 'jsx', 'tsx'];
 
     console.log(`Processing ${blobObjects.length} blob objects...`);
     for (let i = 0; i < blobObjects.length; i++) {
