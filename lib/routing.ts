@@ -30,7 +30,7 @@ export class WalrusSitesRouter {
         const routesObj = await this.fetchRoutesDynamicFieldObject(siteObjectId);
         const objectData = routesObj.data;
         if (objectData && objectData.bcs && objectData.bcs.dataType === "moveObject") {
-            const routingDuration = Date.now() - reqStartTime;
+            // const routingDuration = Date.now() - reqStartTime;
             // instrumentationFacade.recordRoutingTime(routingDuration, siteObjectId);
             return this.parseRoutesData(objectData.bcs.bcsBytes);
         }

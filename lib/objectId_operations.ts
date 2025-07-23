@@ -4,8 +4,7 @@ import {
     toHex
 } from "@mysten/sui/utils";
 import logger from "./logger";
-
-const baseX = require('base-x');
+import baseX from 'base-x';
 
 const BASE36 = "0123456789abcdefghijklmnopqrstuvwxyz";
 const b36 = baseX(BASE36);

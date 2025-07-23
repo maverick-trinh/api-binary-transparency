@@ -13,10 +13,10 @@ import { WalrusSitesRouter } from "./lib/routing";
 * Premium fetchers use premium RPC nodes that can serve content faster and more reliably,
 * while standard fetchers use standard RPC nodes.
 */
-const NETWORK = "testnet";
-const RPC_URL_LIST = ["https://fullnode.testnet.sui.io"];
-const AGGREGATOR_URL="https://aggregator.walrus-testnet.walrus.space";
-const SITE_PACKAGE="0xf99aee9f21493e1590e7e5a9aea6f343a1f381031a04a732724871fc294be799";
+const NETWORK = "mainnet";
+const RPC_URL_LIST = ["https://fullnode.mainnet.sui.io"];
+const AGGREGATOR_URL="https://aggregator.walrus-mainnet.walrus.space";
+const SITE_PACKAGE="0x26eb7ee8688da02c5f671679524e379f0b837a12f1d1d799f255b7eea260ad27";
 
 class UrlFetcherFactory {
   // TODO: Will check premiumUrl later
