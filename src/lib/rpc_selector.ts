@@ -6,16 +6,9 @@ import {
     SuiObjectResponse,
 } from "@mysten/sui/client";
 import { SuinsClient } from "@mysten/suins";
-import logger from "./logger";
-import { NameRecord, Network } from "./types";
-
-interface RPCSelectorInterface {
-    getObject(input: GetObjectParams): Promise<SuiObjectResponse>;
-    multiGetObjects(input: MultiGetObjectsParams): Promise<SuiObjectResponse[]>;
-    getDynamicFieldObject(
-        input: GetDynamicFieldObjectParams,
-    ): Promise<SuiObjectResponse>;
-}
+import logger from "../config/logger";
+import { NameRecord, Network } from "../types";
+import { RPCSelectorInterface } from "../interfaces";
 
 class WrappedSuiClient extends SuiClient {
     private url: string;
@@ -40,7 +33,6 @@ class WrappedSuiClient extends SuiClient {
         return await this.suinsClient.getNameRecord(name)
     }
 }
-
 
 export class RPCSelector implements RPCSelectorInterface {
     private clients: WrappedSuiClient[];

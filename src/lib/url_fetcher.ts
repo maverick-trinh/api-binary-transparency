@@ -3,16 +3,15 @@ import {
   isResource,
   optionalRangeToHeaders as optionalRangeToRequestHeaders,
   Routes,
-} from "./types/index";
+} from "../types";
 import { subdomainToObjectId, HEXtoBase36 } from "./objectId_operations";
 import { SuiNSResolver } from "./suins";
 import { ResourceFetcher } from "./resource";
-import { aggregatorEndpoint } from "./aggrerator";
+import { aggregatorEndpoint } from "../utils/helpers";
 import { toBase64 } from "@mysten/bcs";
-import { sha256 } from "./crypto";
+import { sha256 } from "../utils/helpers";
 import { WalrusSitesRouter } from "./routing";
-import { HttpStatusCodes } from "./http/http_status_codes";
-import logger from "./logger";
+import logger from "../config/logger";
 
 /**
  * Includes all the logic for fetching the URL contents of a walrus site.
@@ -46,7 +45,6 @@ export class UrlFetcher {
       if (isObjectId) {
         return resolveObjectResult;
       }
-
     }
 
     return "";
@@ -133,6 +131,7 @@ export class UrlFetcher {
         "Failed to fetch resource! Response from aggregator endpoint not ok.",
         { path: result.path, status: contents.status }
       );
+      // TODO: Site Not Found
       // return siteNotFound();
     }
 
@@ -140,16 +139,19 @@ export class UrlFetcher {
     // Verify the integrity of the aggregator response by hashing
     // the response contents.
     const h10b = toBase64(await sha256(body));
-    // if (result.blob_hash != h10b) {
-    //     logger.error(
-    //         "Checksum mismatch! The hash of the fetched resource does not " +
-    //         "match the hash of the aggregator response.",{
-    //         path: result.path,
-    //         blobHash: result.blob_hash,
-    //         aggrHash: h10b
-    //     });
-    //     return generateHashErrorResponse();
-    // }
+    if (result.blob_hash != h10b) {
+      logger.error(
+        "Checksum mismatch! The hash of the fetched resource does not " +
+          "match the hash of the aggregator response.",
+        {
+          path: result.path,
+          blobHash: result.blob_hash,
+          aggrHash: h10b,
+        }
+      );
+      // TODO: Fix it
+      // return generateHashErrorResponse();
+    }
 
     return new Response(body, {
       headers: {

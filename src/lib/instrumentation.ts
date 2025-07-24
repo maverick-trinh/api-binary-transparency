@@ -1,7 +1,7 @@
 import { MeterProvider } from "@opentelemetry/sdk-metrics"
 import { PrometheusExporter } from "@opentelemetry/exporter-prometheus"
 import { Attributes, Counter, Meter, Histogram } from "@opentelemetry/api"
-import logger from "./logger"
+import logger from "../config/logger"
 // TODO: Don't need to use this source
 /**
  * Prometheus' instrumentation manager for minting backend.
@@ -16,7 +16,6 @@ export class InstrumentationFacade {
     private num_resource_not_found_counter: Counter;
     private num_full_node_fail_counter: Counter;
     private num_hash_mismatch_counter: Counter;
-    // private num_no_object_id_found_counter: Counter;
 
     private routingHistogram: Histogram<Attributes>;
     private fetchRoutesDynamicFieldObjectHistogram: Histogram<Attributes>;

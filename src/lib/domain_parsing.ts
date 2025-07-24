@@ -1,5 +1,5 @@
 import { parseDomain, ParseResultType } from "parse-domain";
-import { UrlExtract, DomainDetails } from "./types/index";
+import { UrlExtract, DomainDetails } from "../types";
 
 /**
  * Returns the domain (e.g. "example.com") of the given URL.

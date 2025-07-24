@@ -17,6 +17,6 @@
     "noImplicitAny": false,
     "noImplicitReturns": false
   },
-  "include": ["*.ts"],
+  "include": ["*.ts", "src/app.ts", "src/factory/url_fetcher_factory.ts"],
   "exclude": ["node_modules", "dist"]
 }

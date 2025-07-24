@@ -1,8 +1,8 @@
-import { DomainDetails } from "./types/index";
-import { getDomain } from "./domain-parsing";
-import { aggregatorEndpoint } from "./aggrerator";
+import { DomainDetails } from "../types";
+import { getDomain } from "./domain_parsing";
+import { aggregatorEndpoint } from "../utils/helpers";
 import { SuiObjectResponse } from "@mysten/sui/client";
-import logger from "./logger";
+import logger from "../config/logger";
 
 /**
  * Redirects to the portal URL.

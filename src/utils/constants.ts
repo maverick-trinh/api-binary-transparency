@@ -1,4 +1,3 @@
-// TODO(alex): add MAINNET_SITE_PACKAGE
 export const MAX_REDIRECT_DEPTH = 3;
 export const SITE_NAMES: { [key: string]: string } = {
     // Any hardcoded (non suins) name -> object_id mappings go here

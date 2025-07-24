@@ -3,12 +3,11 @@ import {
     isValidSuiObjectId,
     toHex
 } from "@mysten/sui/utils";
-import logger from "./logger";
+import logger from "../config/logger";
 import baseX from 'base-x';
 
 const BASE36 = "0123456789abcdefghijklmnopqrstuvwxyz";
 const b36 = baseX(BASE36);
-
 
 /**
  * In case of base36 subdomain support, transform the subdomain from b36 to hex.

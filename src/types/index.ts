@@ -1,6 +1,4 @@
-// Copyright (c) Mysten Labs, Inc.
-// SPDX-License-Identifier: Apache-2.0
-import logger from "../logger";
+import logger from "../config/logger";
 
 /**
  * The origin of the request, divided into subdomain and path.
@@ -140,3 +138,18 @@ export type NameRecord = {
  * The Sui client network type.
  */
 export type Network = 'testnet' | 'mainnet';
+
+/**
+ * Url validate type.
+ */
+export type UrlValidate = 
+  | {
+      isValid: true;
+      url: URL;
+      error?: undefined;
+    }
+  | {
+      isValid: false;
+      url?: undefined;
+      error: string;
+    };

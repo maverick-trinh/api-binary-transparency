@@ -1,17 +1,17 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { HttpStatusCodes } from "./http/http_status_codes";
+import { HttpStatusCodes } from "../enums";
 import { SuiObjectData, SuiObjectResponse } from "@mysten/sui/client";
-import { Resource, VersionedResource } from "./types";
-import { MAX_REDIRECT_DEPTH } from "./constant";
+import { Resource, VersionedResource } from "../types";
+import { MAX_REDIRECT_DEPTH } from "../utils/constants";
 import { checkRedirect } from "./redirects";
 import { fromBase64 } from "@mysten/bcs";
 import { ResourcePathStruct, DynamicFieldStruct, ResourceStruct } from "./bcs_data_parsing";
 import { deriveDynamicFieldID } from "@mysten/sui/utils";
 import { bcs } from "@mysten/bcs";
 import { RPCSelector } from "./rpc_selector";
-import logger from "./logger";
+import logger from "../config/logger";
 
 /**
  * The ResourceFetcher class is responsible for fetching resources associated with a site.

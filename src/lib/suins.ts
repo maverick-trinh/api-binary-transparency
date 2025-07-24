@@ -1,7 +1,7 @@
-import { SITE_NAMES } from "./constant";
+import { SITE_NAMES } from "../utils/constants";
 import { RPCSelector } from "./rpc_selector";
-import logger from "./logger";
-import { NameRecord } from "./types";
+import logger from "../config/logger";
+import { NameRecord } from "../types";
 import { instrumentationFacade } from "./instrumentation";
 
 export class SuiNSResolver {
