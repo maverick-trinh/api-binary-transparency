@@ -1,4 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
+import { HttpStatusCodes } from '../enums';
+import { sendErrorResponse } from '../utils/helpers';
 
 export const errorHandler = (
   error: Error,
@@ -6,20 +8,25 @@ export const errorHandler = (
   res: Response,
   next: NextFunction
 ) => {
-  console.error('Error:', error);
-
   if (res.headersSent) {
     return next(error);
   }
 
-  res.status(500).json({
-    error: 'An internal server error occurred.',
-    details: process.env.NODE_ENV === 'development' ? error.message : undefined,
-  });
+  return sendErrorResponse(
+    res,
+    'Internal server error',
+    HttpStatusCodes.INTERNAL_SERVER_ERROR,
+    process.env.NODE_ENV === 'development' ? error.message : 'An unexpected error occurred',
+    'INTERNAL_ERROR'
+  );
 };
 
 export const notFoundHandler = (req: Request, res: Response) => {
-  res.status(404).json({
-    error: `Route ${req.originalUrl} not found`,
-  });
+  return sendErrorResponse(
+    res,
+    'Route not found',
+    HttpStatusCodes.NOT_FOUND,
+    `The requested route ${req.originalUrl} was not found on this server`,
+    'ROUTE_NOT_FOUND'
+  );
 };

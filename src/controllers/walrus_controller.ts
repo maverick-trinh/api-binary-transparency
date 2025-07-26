@@ -3,6 +3,8 @@ import { SuiClient, getFullnodeUrl } from "@mysten/sui/client";
 import { WalrusClient } from "@mysten/walrus";
 import { WalrusService } from "../services/walrus_service";
 import { SUI_NETWORK, WALRUS_NETWORK } from '../config/environment';
+import { HttpStatusCodes } from '../enums';
+import { sendSuccessResponse, sendErrorResponse } from '../utils/helpers';
 import logger from "../config/logger";
 import { validateUrl } from "../utils/validators";
 
@@ -23,37 +25,48 @@ export class WalrusController {
       const nameParam = req.query.name as string;
       
       if (!nameParam) {
-        return res.status(400).json({ 
-          error: "Name parameter is required" 
-        });
+        return sendErrorResponse(
+          res,
+          "Name parameter is required",
+          HttpStatusCodes.BAD_REQUEST,
+          "The 'name' query parameter must be provided"
+        );
       }
 
       const urlValidationResult = validateUrl(nameParam);
 
       if (!urlValidationResult.isValid) {
-        return res.status(400).json({ 
-          error: urlValidationResult.error 
-        });
+        return sendErrorResponse(
+          res,
+          "Invalid URL format",
+          HttpStatusCodes.BAD_REQUEST,
+          urlValidationResult.error
+        );
       }
 
       const url = urlValidationResult.url;
       const portalObjectId = await walrusService.resolvePortalObjectId(url);
       
       if (!portalObjectId) {
-        return res.status(404).json({ 
-          error: "Could not resolve portal object ID from the provided URL." 
-        });
+        return sendErrorResponse(
+          res,
+          "Resource not found",
+          HttpStatusCodes.NOT_FOUND,
+          "Could not resolve portal object ID from the provided URL"
+        );
       }
 
       const result = await walrusService.fetchBlobData(portalObjectId);
       
-      return res.status(200).json({
-        success: true,
-        data: {
+      return sendSuccessResponse(
+        res,
+        {
           ...result.data,
           network: WALRUS_NETWORK,
-        }
-      });
+        },
+        HttpStatusCodes.OK,
+        "Blob data fetched successfully"
+      );
 
     } catch (error: unknown) {
       // Better error handling
@@ -66,22 +79,27 @@ export class WalrusController {
         
         // Return appropriate error based on type
         if (error.message.includes('network') || error.message.includes('connection')) {
-          return res.status(503).json({
-            error: "Service temporarily unavailable",
-            details: "Unable to connect to blockchain network"
-          });
+          return sendErrorResponse(
+            res,
+            "Service temporarily unavailable",
+            HttpStatusCodes.SERVICE_UNAVAILABLE,
+            "Unable to connect to blockchain network",
+            "NETWORK_ERROR"
+          );
         }
       } else {
         logger.error("An unknown error occurred:", error);
       }
 
-      return res.status(500).json({
-        error: "An internal server error occurred.",
-        // Don't expose internal error details in production
-        details: process.env.NODE_ENV === 'development' 
+      return sendErrorResponse(
+        res,
+        "Internal server error",
+        HttpStatusCodes.INTERNAL_SERVER_ERROR,
+        process.env.NODE_ENV === 'development' 
           ? (error as Error)?.message 
-          : 'Internal server error'
-      });
+          : 'An unexpected error occurred',
+        "INTERNAL_ERROR"
+      );
     }
   }
 }

@@ -153,3 +153,39 @@ export type UrlValidate =
       url?: undefined;
       error: string;
     };
+
+/**
+ * Standardized API response structure
+ */
+export interface ApiResponse<T = any> {
+  success: boolean;
+  statusCode: number;
+  message?: string;
+  data?: T;
+  error?: {
+    message: string;
+    details?: string;
+    code?: string;
+  };
+  timestamp: string;
+}
+
+/**
+ * Success response data structure
+ */
+export interface SuccessResponse<T = any> extends ApiResponse<T> {
+  success: true;
+  data: T;
+}
+
+/**
+ * Error response data structure
+ */
+export interface ErrorResponse extends ApiResponse {
+  success: false;
+  error: {
+    message: string;
+    details?: string;
+    code?: string;
+  };
+}

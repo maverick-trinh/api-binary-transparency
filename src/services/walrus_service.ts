@@ -4,6 +4,7 @@ import { bcs } from "@mysten/bcs";
 import { base64UrlSafeEncode, getCurrentUTCTimestamp } from "../utils/helpers";
 import { getSubdomainAndPath } from "../lib/domain_parsing";
 import { PORTAL_DOMAIN_NAME_LENGTH } from "../config/environment";
+import { ALLOWED_FILE_TYPES } from "../utils/constants";
 import { standardUrlFetcher } from "../factory/url_fetcher_factory";
 import logger from "../config/logger";
 
@@ -86,7 +87,7 @@ export class WalrusService {
       for (const field of data) {
         const filename = field.name.value as string;
         const blobObjectId = field.objectId;
-        console.log(`Found blob: ${filename} -> ${blobObjectId}`);
+        console.log(`Found blob: ${JSON.stringify(filename)} -> ${blobObjectId}`);
         blobIdMap.set(filename, blobObjectId);
       }
       blobCursor = hasNextPage ? nextCursor || null : null;
@@ -108,7 +109,6 @@ export class WalrusService {
     console.log(`Fetched ${blobObjects.length} blob objects`);
 
     const results: { [key: string]: any } = {};
-    const allowedFileTypes = ['.html', '.css', '.js', '.mjs', '.jsx', '.tsx', '.json'];
 
     console.log(`Processing ${blobObjects.length} blob objects...`);
     for (let i = 0; i < blobObjects.length; i++) {
@@ -124,7 +124,7 @@ export class WalrusService {
         console.log(`Processing file: ${filename}`);
 
         if (blobObject.data && blobObject.data.content) {
-          const result = await this.processSingleBlob(blobObject, allowedFileTypes);
+          const result = await this.processSingleBlob(blobObject, ALLOWED_FILE_TYPES);
           if (result) {
             results[result.fileName] = result.data;
           }

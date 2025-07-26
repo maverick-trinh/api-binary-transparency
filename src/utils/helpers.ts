@@ -1,3 +1,7 @@
+import { Response } from 'express';
+import { HttpStatusCodes } from '../enums';
+import { ApiResponse, SuccessResponse, ErrorResponse } from '../types';
+
 const { subtle } = globalThis.crypto;
 
 /**
@@ -49,4 +53,69 @@ export function aggregatorEndpoint(blob_id: string, aggregatorUrl: string): URL 
 
 export function getCurrentUTCTimestamp(): string {
   return new Date().toISOString();
+}
+
+/**
+ * Creates a standardized success response
+ */
+export function createSuccessResponse<T>(
+  data: T,
+  statusCode: number = 200,
+  message?: string
+): SuccessResponse<T> {
+  return {
+    success: true,
+    statusCode,
+    message,
+    data,
+    timestamp: getCurrentUTCTimestamp()
+  };
+}
+
+/**
+ * Creates a standardized error response
+ */
+export function createErrorResponse(
+  message: string,
+  statusCode: number = 500,
+  details?: string,
+  code?: string
+): ErrorResponse {
+  return {
+    success: false,
+    statusCode,
+    error: {
+      message,
+      details,
+      code
+    },
+    timestamp: getCurrentUTCTimestamp()
+  };
+}
+
+/**
+ * Sends a standardized success response
+ */
+export function sendSuccessResponse<T>(
+  res: Response,
+  data: T,
+  statusCode: number = 200,
+  message?: string
+): Response {
+  const response = createSuccessResponse(data, statusCode, message);
+  return res.status(statusCode).json(response);
+}
+
+/**
+ * Sends a standardized error response using HttpStatusCodes
+ */
+export function sendErrorResponse(
+  res: Response,
+  message: string,
+  statusCode: HttpStatusCodes | number = 500,
+  details?: string,
+  code?: string
+): Response {
+  const response = createErrorResponse(message, statusCode, details, code);
+  return res.status(statusCode).json(response);
 }
