@@ -23,99 +23,13 @@ const router = Router();
  *         description: The url from Walrus mainet
  *     responses:
  *       200:
- *         description: Successfully fetched blob data using Walrus SDK
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Successfully fetched data for walrus.sui"
- *                 data:
- *                   type: object
- *                   additionalProperties:
- *                     type: object
- *                     properties:
- *                       blob_id:
- *                         type: string
- *                         description: The Walrus blob ID
- *                       content:
- *                         type: string
- *                         description: The decoded blob content
- *                       size:
- *                         type: number
- *                         description: Size of the content in characters
- *                       error:
- *                         type: string
- *                         description: Error message if blob fetch failed
- *                   example:
- *                     "file1.txt":
- *                       blob_id: "AbCdEf123..."
- *                       content: "Content of file1"
- *                       size: 16
- *                     "file2.json":
- *                       blob_id: "XyZ789..."
- *                       content: "{\"key\": \"value\"}"
- *                       size: 16
- *             examples:
- *               success:
- *                 summary: Successful response with blob data from Walrus
- *                 value:
- *                   message: "Successfully fetched data for walrus.sui"
- *                   data:
- *                     "readme.md": "# My Project\nThis is a sample readme file."
- *                     "config.json": "{\"version\": \"1.0.0\", \"name\": \"MyApp\"}"
- *               empty:
- *                 summary: Portal found but no blobs
- *                 value:
- *                   message: "Portal found, but it contains no blobs."
- *                   data: {}
+ *         description: Successfully fetched blob data.
  *       400:
- *         description: Bad request - SuiNS name is required
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "SuiNS name is required. Use ?name=<your-name>.sui"
+ *         description: Invalid request or missing parameters.
  *       404:
- *         description: Not found - SuiNS name not found, no Portal object, or no blob table
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *               examples:
- *                 suins_not_found:
- *                   summary: SuiNS name not found
- *                   value:
- *                     error: "SuiNS name 'example.sui' not found or has no address."
- *                 no_portal:
- *                   summary: No Portal object found
- *                   value:
- *                     error: "No Portal object found for the owner of 'example.sui'."
- *                 no_blob_table:
- *                   summary: No blob table found
- *                   value:
- *                     error: "Could not find the blob table in the Portal object."
+ *         description: SuiNS name or blobs not found.
  *       500:
- *         description: Internal server error
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "An internal server error occurred."
- *                 details:
- *                   type: string
- *                   example: "Connection timeout or Walrus network error"
+ *         description: Internal server error.
  */
 router.get("/fetch-blobs", WalrusController.fetchBlobs);
 
